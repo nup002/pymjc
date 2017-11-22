@@ -51,9 +51,6 @@ def MJC(s1, s2, dXYlimit=inf, beta=1, overrideChecks=False, showPlot=False, stds
     dXY         :   Cumulative dissimilarity measure.
     cancelled   :   Boolean. If True, the computation was cancelled as dXY reached dXYlimit.
     """
-    #Shapes of time series are required later.
-    s1shape = s1.shape
-    s2shape = s2.shape
     
     #Check if the timeseries conform to the required format for the algorithm to work.
     #We allow the user to bypass checks to speed up execution speed.
@@ -63,7 +60,8 @@ def MJC(s1, s2, dXYlimit=inf, beta=1, overrideChecks=False, showPlot=False, stds
             s1 = np.array(s1)
         if not isinstance(s2, np.ndarray):
             s2 = np.array(s2)   
-            
+        s1shape = s1.shape
+        s2shape = s2.shape
         #Check whether time series s1 and s2 have time information.
         #Also verify their shapes and formats are correct
         hasT = False
@@ -78,7 +76,10 @@ def MJC(s1, s2, dXYlimit=inf, beta=1, overrideChecks=False, showPlot=False, stds
             s2 = np.array([np.arange(s2shape[0]),s2])
             s1shape = s1.shape
             s2shape = s2.shape        
-    
+    else:
+        s1shape = s1.shape
+        s2shape = s2.shape
+        
     #Plot the two time series, if showPlot is true.
     if showPlot:
         fig=plt.figure(figsize=(13,7))
@@ -138,7 +139,6 @@ def cmin(s1,t1,s2,t2,N,phi):
                 break
         else:
             c += pow((s1[1, t1]-s2[1, t2+d]), 2)
-            print("Full C:{}".format(c))
             if c < cmin:
                 cmin = c
                 dmin = d
