@@ -51,7 +51,7 @@ Parameters
 ----------
 s1              : Time series 1. 
 s2              : Time series 2. 
-dXYlimit        : Optional early abondoning variable. If the dissimilarity goes above this limit the 
+dXYlimit        : Optional early abandoning variable. If the dissimilarity goes above this limit the 
 computation is cancelled.
 beta            : Optional time jump cost. Defaults to 1. If 0, there is no cost associated with jumping forward.
 overrideChecks  : Optional. Override checking if the supplied time series conform to the required format. See the section EXECUTION SPEED above for more information.
