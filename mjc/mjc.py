@@ -1,38 +1,38 @@
-from math import pow, inf
+from math import inf
 from statistics import stdev
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import plot, grid, show
+from matplotlib.pyplot import plot
+import warnings
 import numpy as np
 
 
-def minimumMJC(s1, s2, dXYlimit=inf, beta=1, showPlot=False, std_s1=None, std_s2=None, tavg_s1=None, tavg_s2=None,
-               overrideChecks=False):
-    dXY_a, abandoned_a, std_s1, std_s2, tavg_s1, tavg_s2, s1, s2 = MJC(s1, s2, dXYlimit, beta, showPlot, std_s1, std_s2,
-                                                                       tavg_s1, tavg_s2, return_args=True,
-                                                                       override_checks=overrideChecks)
+def minimum_mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=None, tavg_s1=None,
+                tavg_s2=None, override_checks=False):
+    """ Computes the Minimum Jump Cost between s1 and s2 and between s2 and s1, and returns the lowest value."""
+    dxy_a, abandoned_a = mjc(s1, s2, dxy_limit, beta, show_plot, std_s1, std_s2, tavg_s1, tavg_s2, return_args=True,
+                             override_checks=override_checks)
+    dxy_b, abandoned_b = mjc(s2, s1, dxy_limit, beta, show_plot, std_s2, std_s1, tavg_s2, tavg_s1,
+                             override_checks=override_checks)
+    return min(dxy_a, dxy_b), abandoned_a and abandoned_b
 
-    dXY_b, abandoned_b = MJC(s2, s1, dXYlimit, beta, showPlot, std_s2, std_s1, tavg_s2, tavg_s1, override_checks=True)
 
-    return min(dXY_a, dXY_b), abandoned_a and abandoned_b
-
-
-def MJC(s1, s2, dxy_limit=inf, beta=1, show_plot=False, std_s1=None, std_s2=None, tavg_s1=None, tavg_s2=None,
+def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=None, tavg_s1=None, tavg_s2=None,
         return_args=False, override_checks=False):
     """
     Minimum Jump Cost (MJC) dissimiliarity algorithm.
     This algorithm implements the MJC algorithm devised by Joan Serra and Josep Lluis Arcos (2012). This algorithm was
     shown to outperform the Dynamic Time Warp (DTW) dissimilarity algorithm on several datasets.
-    
-    This function takes two time series s1 and s2 and computes the minimum jump cost between them. 
-    It has been modified so that it can compute the MJC of time series that have arbitrarily spaced data points. 
+
+    mjc() takes two time series s1 and s2 and computes the minimum jump cost between them.
+    It has been modified so that it can compute the MJC of time series that have arbitrarily spaced data points.
     An early abandoning variable, dXYlimit, allows the user to specify a maximum dissimilarity that will cancel the
     computation.
-    
+
     The time series are specified as follows:
-    - s1 and s2 may be of different length. 
+    - s1 and s2 may be of different length.
     - s1 and s2 may or may not have time information.
     - If one of the time series has time information, the other must also have it.
-    
+
     A time series with no time information is just an array of values. The first element of the array corresponds to
     the earliest point in the time series. Example: s1 = [d_0, d_1, d_2, ...], where d_i is the ith value of the time
     series.
@@ -40,26 +40,26 @@ def MJC(s1, s2, dxy_limit=inf, beta=1, show_plot=False, std_s1=None, std_s2=None
     data, and the data at index 1 is amplitude data.
     Example: s1 = [[t_0, t_1, t_2, ...], [d_0, d_1, d_2, ...]], where d_i is the ith value of the time series, and t_i
     is the time of the ith measurement. The time values may be integers or floats, and need not begin at 0.
-    
+
     To visualize the algorithm, you may pass the variable showPlot=True. This will generate a plot with the two time
     series, and arrows signifying the jumps that the algorithm made when calculating the Minimum Jump Cost.
-    
+
     ----EXECUTION SPEED----
     The time series are cast to numpy arrays. The checking and casting lowers execution speed. Therefore, an option to
     disable this checking and casting has been implemented. If you are absolutely sure that the time series s1 and s2
     are numpy.ndarray's of the format ([time data],[amplitude data]), you may pass the variable override_checks=True.
-    
+
     As part of the calculation of the MJC, the algorithm calculates the standard deviations of the amplitude data, and
     the average length of time between each data point of s1 and s2. This lowers execution speed, but is required.
     However, if you know the standard deviations and/or the average time difference between data points of either
     (or both) s1 and s2 a priori, you may pass these as variables. They are named std_s1 and std_s2 and tavg_s1 and
     tavg_s2. None, any, or all of these may be passed.
-    
-    
+
+
     Parameters
     ----------
-    s1              : Time series 1. 
-    s2              : Time series 2. 
+    s1              : Time series 1.
+    s2              : Time series 2.
     dxy_limit       : Optional early abandoning variable. If the dissimilarity goes above this limit the computation is
         cancelled.
     beta            : Optional time jump cost. Defaults to 1. If 0, there is no cost associated with jumping forward.
@@ -77,7 +77,7 @@ def MJC(s1, s2, dxy_limit=inf, beta=1, show_plot=False, std_s1=None, std_s2=None
         s2.
     override_checks  : Optional. Override checking if the supplied time series conform to the required format. See the
         section EXECUTION SPEED above for more information.
-    
+
     Returns
     -------
     dXY         :   Cumulative dissimilarity measure.
@@ -113,7 +113,6 @@ def MJC(s1, s2, dxy_limit=inf, beta=1, show_plot=False, std_s1=None, std_s2=None
             s1 = np.array([np.arange(s1.shape[0]), s1])
         if s2.ndim != 2:
             s2 = np.array([np.arange(s2.shape[0]), s2])
-
 
     s1shape = s1.shape
     s2shape = s2.shape
@@ -188,8 +187,22 @@ def MJC(s1, s2, dxy_limit=inf, beta=1, show_plot=False, std_s1=None, std_s2=None
         return dXY, False
 
 
+def minimumMJC(s1, s2, dXYlimit=np.inf, beta=1, showPlot=False, std_s1=None, std_s2=None, tavg_s1=None, tavg_s2=None,
+               overrideChecks=False):
+    warnings.warn("minimumMJC is deprecated and will be removed in a future release. Use minimum_mjc() instead.",
+                  DeprecationWarning)
+    return minimum_mjc(s1, s2, dXYlimit, beta, showPlot, std_s1, std_s2, tavg_s1, tavg_s2, overrideChecks)
+
+
+def MJC(s1, s2, dXYlimit=inf, beta=1, showPlot=False, std_s1=None, std_s2=None, tavg_s1=None, tavg_s2=None,
+        returnargs=False, overrideChecks=False):
+    warnings.warn("MJC is deprecated and will be removed in the a future release. Use minimum_mjc() instead.",
+                  DeprecationWarning)
+    return mjc(s1, s2, dXYlimit, beta, showPlot, std_s1, std_s2, tavg_s1, tavg_s2, returnargs, overrideChecks)
+
+
 def cmin(s1, t1, s2, t2, N, phi, tavg, beta):
-    cmin = inf
+    cmin = np.inf
     d = 0
     dmin = 0
     s2t = s2[0, max(t2 - 1, 0)]  # Start time of series 2
