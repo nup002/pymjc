@@ -6,6 +6,76 @@ import warnings
 import numpy as np
 
 
+def get_overlapping_region(s1, s2):
+    """
+    Computes the indexes of s1 and s2 that will fetch only the regions of s1 and s2 that are overlapping.
+    Parameters
+    ----------
+    s1  : np.ndarray. Data series 1.
+    s2  : np.ndarray. Data series 2.
+
+    Returns
+    -------
+    t1  : Int. Start index of s1 region.
+    t2  : Int. Start index of s2 region.
+    s1_length   : Int. End index of s1 region.
+    s2_length   : Int. End index of s2 region.
+    """
+    s1start = s1[0, 0]
+    s2start = s2[0, 0]
+    t1 = np.searchsorted(s1[0], s2start, side="left") if s1start < s2start else 0
+    t2 = np.searchsorted(s2[0], s1start, side="left") if s1start > s2start else 0
+
+    # Get end index of the dataset that ends the latest.
+    s1end = s1[0, -1]
+    s2end = s2[0, -1]
+    s1_length = np.searchsorted(s1[0], s2end, side="right") + 1 if s1end > s2end else s1.shape[1]
+    s2_length = np.searchsorted(s2[0], s1end, side="right") + 1 if s1end < s2end else s1.shape[1]
+
+    assert s2[0, s2_length - 1] - s1[0, t1] > 0 and s1[0, s1_length - 1] - s2[0, t2] > 0, \
+        'The time series s1 and s2 have no overlapping regions.'
+    return t1, t2, s1_length, s2_length
+
+
+def check_input(s1, s2, override_checks):
+    """
+    Performs checks on input data to verify that they conform to the required format for the MJC algorithm.
+    Parameters
+    ----------
+    s1              : List or np.ndarray. Data series 1.
+    s2              : List or np.ndarray. Data series 1.
+    override_checks : Bool. Whether to perform checks or not.
+
+    Returns
+    -------
+    s1  : np.ndarray. Checked and optionally cast to np.ndarray of originally a List.
+    s2  : np.ndarray. Checked and optionally cast to np.ndarray of originally a List.
+    """
+    # Check if the timeseries conform to the required format for the algorithm to work.
+    # We allow the user to bypass checks to increase execution speed.
+    if not override_checks:
+        # Make sure arrays are numpy arrays. Cast to np.array if they are not.
+        if not isinstance(s1, np.ndarray):
+            s1 = np.array(s1)
+        if not isinstance(s2, np.ndarray):
+            s2 = np.array(s2)
+        assert s1.ndim in [1, 2], "Series s1 must be either 1D or 2D."
+        assert s2.ndim in [1, 2], "Series s2 must be either 1D or 2D."
+        if s1.ndim != s2.ndim:
+            raise ValueError(f"Both series s1 and s2 must have the same number of dimensions. "
+                             f"s1 is {s1.ndim}D, s2 is {s2.ndim}D.")
+
+        # Assert that data is numeric
+        assert np.issubdtype(s1.dtype, np.number), f"Series s1 must be numeric, not {s1.dtype=}."
+        assert np.issubdtype(s2.dtype, np.number), f"Series s2 must be numeric, not {s2.dtype=}."
+
+        # Generate dummy time info so that the algorithm can work.
+        if s1.ndim != 2:
+            s1 = np.array([np.arange(s1.shape[0]), s1])
+        if s2.ndim != 2:
+            s2 = np.array([np.arange(s2.shape[0]), s2])
+    return s1, s2
+
 def minimum_mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=None, tavg_s1=None,
                 tavg_s2=None, override_checks=False):
     """ Computes the Minimum Jump Cost between s1 and s2 and between s2 and s1, and returns the lowest value."""
@@ -80,8 +150,8 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
 
     Returns
     -------
-    dXY         :   Cumulative dissimilarity measure.
-    cancelled   :   Boolean. If True, the computation was cancelled as dXY reached dxy_limit.
+    d_xy         :   Cumulative dissimilarity measure.
+    cancelled   :   Boolean. If True, the computation was cancelled as d_xy reached dxy_limit.
     std_s1      :   Only returned if return_args=True. Value of std_s1 used in the computation.
     std_s2      :   Only returned if return_args=True. Value of std_s2 used in the computation.
     tavg_s1     :   Only returned if return_args=True. Value of tavg_s1 used in the computation.
@@ -89,33 +159,7 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
     s1          :   Only returned if return_args=True. Value of s1 used in the computation.
     s2          :   Only returned if return_args=True. Value of s2 used in the computation.
     """
-    dxy_limit = dxy_limit * beta
-    # Check if the timeseries conform to the required format for the algorithm to work.
-    # We allow the user to bypass checks to increase execution speed.
-    if not override_checks:
-        # Make sure arrays are numpy arrays. Cast to np.array if they are not.
-        if not isinstance(s1, np.ndarray):
-            s1 = np.array(s1)
-        if not isinstance(s2, np.ndarray):
-            s2 = np.array(s2)
-        assert s1.ndim in [1, 2], "Series s1 must be either 1D or 2D."
-        assert s2.ndim in [1, 2], "Series s2 must be either 1D or 2D."
-        if s1.ndim != s2.ndim:
-            raise ValueError(f"Both series s1 and s2 must have the same number of dimensions. "
-                             f"s1 is {s1.ndim}D, s2 is {s2.ndim}D.")
-
-        # Assert that data is numeric
-        assert np.issubdtype(s1.dtype, np.number), f"Series s1 must be numeric, not {s1.dtype=}."
-        assert np.issubdtype(s2.dtype, np.number), f"Series s2 must be numeric, not {s2.dtype=}."
-
-        # Generate dummy time info so that the algorithm can work.
-        if s1.ndim != 2:
-            s1 = np.array([np.arange(s1.shape[0]), s1])
-        if s2.ndim != 2:
-            s2 = np.array([np.arange(s2.shape[0]), s2])
-
-    s1shape = s1.shape
-    s2shape = s2.shape
+    s1, s2 = check_input(s1, s2, override_checks)
 
     # Plot the two time series, if show_plot is true.
     if show_plot:
@@ -135,56 +179,46 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
     if tavg_s2 is None:
         tavg_s2 = np.average(np.ediff1d(s2[0]))
 
-    # We will only compute the MJC for the parts of s1 and s2 that overlap.
-    # Get start index of the dataset that starts the earliest.
-    s1start = s1[0, 0]
-    s2start = s2[0, 0]
-    t1 = np.searchsorted(s1[0], s2start, side="left") if s1start < s2start else 0
-    t2 = np.searchsorted(s2[0], s1start, side="left") if s1start > s2start else 0
+    # Compute the overlapping region
+    t1, t2, s1_length, s2_length = get_overlapping_region(s1, s2)
 
-    # Get end index of the dataset that ends the latest.
-    s1end = s1[0, -1]
-    s2end = s2[0, -1]
-    s1Length = np.searchsorted(s1[0], s2end, side="right") + 1 if s1end > s2end else s1shape[1]
-    s2Length = np.searchsorted(s2[0], s1end, side="right") + 1 if s1end < s2end else s2shape[1]
-
-    assert s2[0, s2Length - 1] - s1[0, t1] > 0 and s1[0, s1Length - 1] - s2[0, t2] > 0, 'Time series not overlapping!'
     # Compute time jump cost constants
-    phi1 = beta * 4 * std_s1 / (s1[0, s1Length - 1] - s1[0, t1])
-    phi2 = beta * 4 * std_s1 / (s2[0, s2Length - 1] - s2[0, t2])
+    phi1 = beta * 4 * std_s1 / (s1[0, s1_length - 1] - s1[0, t1])
+    phi2 = beta * 4 * std_s1 / (s2[0, s2_length - 1] - s2[0, t2])
 
-    # Initiate the cumulative dissimilarity measure dXY.
-    dXY = 0
+    # Initiate the cumulative dissimilarity measure d_xy.
+    d_xy = 0
 
     # Begin computation of the cumulative dissimilarity measure.
-    while t1 < s1Length and t2 < s2Length:
-        c, t1, t2 = cmin(s1, t1, s2, t2, s2Length, phi2, tavg_s2, beta)
+    dxy_limit = dxy_limit * beta
+    while t1 < s1_length and t2 < s2_length:
+        c, t1, t2 = cmin(s1, t1, s2, t2, s2_length, phi2, tavg_s2, beta)
         if show_plot:
             ax.arrow(s1[0, t1 - 1], s1[1, t1 - 1], s2[0, t2 - 1] - s1[0, t1 - 1], s2[1, t2 - 1] - s1[1, t1 - 1],
                      width=0.005, head_width=0.1)
-        dXY += c
-        if dXY >= dxy_limit:
-            return dXY, True
-        if t1 >= s1Length or t2 >= s2Length:
+        d_xy += c
+        if d_xy >= dxy_limit:
+            return d_xy, True
+        if t1 >= s1_length or t2 >= s2_length:
             break
-        c, t2, t1 = cmin(s2, t2, s1, t1, s1Length, phi1, tavg_s1, beta)
+        c, t2, t1 = cmin(s2, t2, s1, t1, s1_length, phi1, tavg_s1, beta)
         if show_plot:
             ax.arrow(s2[0, t2 - 1], s2[1, t2 - 1], s1[0, t1 - 1] - s2[0, t2 - 1], s1[1, t1 - 1] - s2[1, t2 - 1],
                      width=0.005, head_width=0.1)
-        dXY += c
-        if dXY >= dxy_limit:
+        d_xy += c
+        if d_xy >= dxy_limit:
             if return_args:
-                return dXY, True, std_s1, std_s2, tavg_s1, tavg_s2, s1, s2
+                return d_xy, True, std_s1, std_s2, tavg_s1, tavg_s2, s1, s2
             else:
-                return dXY, True
+                return d_xy, True
 
     if show_plot:
         plt.show()
 
     if return_args:
-        return dXY, False, std_s1, std_s2, tavg_s1, tavg_s2, s1, s2
+        return d_xy, False, std_s1, std_s2, tavg_s1, tavg_s2, s1, s2
     else:
-        return dXY, False
+        return d_xy, False
 
 
 def minimumMJC(s1, s2, dXYlimit=np.inf, beta=1, showPlot=False, std_s1=None, std_s2=None, tavg_s1=None, tavg_s2=None,
