@@ -56,9 +56,9 @@ class mjcTester(unittest.TestCase):
         self.assertRaises(AssertionError, mjc, s1, s2)
 
     def test_plot(self):
-        s1 = dummy_data(with_time=True)
-        s2 = dummy_data(with_time=True, time_offset=0)
-        s2[1] += 2
+        s1 = dummy_data()
+        s2 = dummy_data(time_offset=0)
+        s2 += 2
         mjc(s1, s2, show_plot=True)
 
 if __name__ == '__main__':

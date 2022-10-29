@@ -18,23 +18,22 @@ def get_overlapping_region(s1, s2):
     -------
     t1  : Int. Start index of s1 region.
     t2  : Int. Start index of s2 region.
-    s1_length   : Int. End index of s1 region.
-    s2_length   : Int. End index of s2 region.
+    s1_length   : Int. Length of s1 region.
+    s2_length   : Int. Length of s2 region.
     """
     s1start = s1[0, 0]
     s2start = s2[0, 0]
-    t1 = np.searchsorted(s1[0], s2start, side="left") if s1start < s2start else 0
-    t2 = np.searchsorted(s2[0], s1start, side="left") if s1start > s2start else 0
+    s1_start_idx = np.searchsorted(s1[0], s2start, side="left") if s1start < s2start else 0
+    s2_start_idx = np.searchsorted(s2[0], s1start, side="left") if s1start > s2start else 0
 
-    # Get end index of the dataset that ends the latest.
     s1end = s1[0, -1]
     s2end = s2[0, -1]
-    s1_length = np.searchsorted(s1[0], s2end, side="right") + 1 if s1end > s2end else s1.shape[1]
-    s2_length = np.searchsorted(s2[0], s1end, side="right") + 1 if s1end < s2end else s1.shape[1]
+    s1_end_idx = np.searchsorted(s1[0], s2end, side="right") if s1end > s2end else s1.shape[1]
+    s2_end_idx = np.searchsorted(s2[0], s1end, side="right") if s1end < s2end else s2.shape[1]
 
-    assert s2[0, s2_length - 1] - s1[0, t1] > 0 and s1[0, s1_length - 1] - s2[0, t2] > 0, \
+    assert s2[0, s2_end_idx - 1] - s1[0, s1_start_idx] > 0 and s1[0, s1_end_idx - 1] - s2[0, s2_start_idx] > 0, \
         'The time series s1 and s2 have no overlapping regions.'
-    return t1, t2, s1_length, s2_length
+    return s1[:, s1_start_idx:s1_end_idx], s2[:, s2_start_idx:s2_end_idx]
 
 
 def check_input(s1, s2, override_checks):
@@ -159,6 +158,7 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
     s1          :   Only returned if return_args=True. Value of s1 used in the computation.
     s2          :   Only returned if return_args=True. Value of s2 used in the computation.
     """
+    assert beta >= 0, "'beta' must be greater than 0."
     s1, s2 = check_input(s1, s2, override_checks)
 
     # Plot the two time series, if show_plot is true.
@@ -168,58 +168,97 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
         plot(s1[0], s1[1], 'bo', s1[0], s1[1], 'b')
         plot(s2[0], s2[1], 'ro', s2[0], s2[1], 'r')
 
-    # Compute the standard deviations of s1 and s2 and the average delay between data points in s1 and s2 if they are
+    # Get views of overlapping region and their lengths
+    s1_overlapping, s2_overlapping = get_overlapping_region(s1, s2)
+    s1_length = s1_overlapping.shape[1]
+    s2_length = s2_overlapping.shape[1]
+
+    # Compute the standard deviations of s1 and s2 and the average time between data points in s1 and s2 if they are
     # not provided.
     if std_s1 is None:
-        std_s1 = stdev(s1[1])
+        std_s1 = stdev(s1_overlapping[1])
     if std_s2 is None:
-        std_s1 = stdev(s2[1])
+        std_s2 = stdev(s2_overlapping[1])
+    std_mean = std_s1 + std_s2
     if tavg_s1 is None:
-        tavg_s1 = np.average(np.ediff1d(s1[0]))
+        tavg_s1 = np.average(np.ediff1d(s1_overlapping[0]))
     if tavg_s2 is None:
-        tavg_s2 = np.average(np.ediff1d(s2[0]))
+        tavg_s2 = np.average(np.ediff1d(s2_overlapping[0]))
 
-    # Compute the overlapping region
-    t1, t2, s1_length, s2_length = get_overlapping_region(s1, s2)
-
-    # Compute time jump cost constants
-    phi1 = beta * 4 * std_s1 / (s1[0, s1_length - 1] - s1[0, t1])
-    phi2 = beta * 4 * std_s1 / (s2[0, s2_length - 1] - s2[0, t2])
+    # Compute time advancement cost phi. In the original paper, it is unclear how the standard deviation is calculated.
+    # I am assuming it is a mean of the standard deviation of both timeseries.
+    # Due to the potential different sampling frequency of s1 and s2, we must compute two phis.
+    phi1 = beta * 4 * std_mean / s1_length
+    phi2 = beta * 4 * std_mean / s2_length
 
     # Initiate the cumulative dissimilarity measure d_xy.
     d_xy = 0
 
     # Begin computation of the cumulative dissimilarity measure.
     dxy_limit = dxy_limit * beta
-    while t1 < s1_length and t2 < s2_length:
-        c, t1, t2 = cmin(s1, t1, s2, t2, s2_length, phi2, tavg_s2, beta)
-        if show_plot:
-            ax.arrow(s1[0, t1 - 1], s1[1, t1 - 1], s2[0, t2 - 1] - s1[0, t1 - 1], s2[1, t2 - 1] - s1[1, t1 - 1],
-                     width=0.005, head_width=0.1)
+    idx_x = idx_y = 0
+    while idx_x < s1_length and idx_y < s2_length:
+        c, idx_x, idx_y = cmin(s1, idx_x, s2, idx_y, s2_length, phi2, tavg_s2)
         d_xy += c
-        if d_xy >= dxy_limit:
-            return d_xy, True
-        if t1 >= s1_length or t2 >= s2_length:
+        if show_plot:
+            s1_point = s1[:, idx_x - 1]
+            s2_point = s2[:, idx_y - 1]
+            ax.arrow(s1_point[0], s1_point[1],
+                     s2_point[0] - s1_point[0],
+                     s2_point[1] - s1_point[1],
+                     width=0.005, head_width=0.1)
+
+        # Break out of loop if end of datasets have been reached or the d_xy limit has been crossed.
+        if idx_x >= s1_length or idx_y >= s2_length or d_xy >= dxy_limit:
             break
-        c, t2, t1 = cmin(s2, t2, s1, t1, s1_length, phi1, tavg_s1, beta)
-        if show_plot:
-            ax.arrow(s2[0, t2 - 1], s2[1, t2 - 1], s1[0, t1 - 1] - s2[0, t2 - 1], s1[1, t1 - 1] - s2[1, t2 - 1],
-                     width=0.005, head_width=0.1)
+
+        c, idx_y, idx_x = cmin(s2, idx_y, s1, idx_x, s1_length, phi1, tavg_s1)
         d_xy += c
+        if show_plot:
+            s1_point = s1[:, idx_x - 1]
+            s2_point = s2[:, idx_y - 1]
+            ax.arrow(s2_point[0], s2_point[1],
+                     s1_point[0] - s2_point[0],
+                     s1_point[1] - s2_point[1],
+                     width=0.005, head_width=0.1)
+        # Break out of loop if the d_xy limit has been crossed
         if d_xy >= dxy_limit:
-            if return_args:
-                return d_xy, True, std_s1, std_s2, tavg_s1, tavg_s2, s1, s2
-            else:
-                return d_xy, True
+            break
 
     if show_plot:
         plt.show()
 
+    limit_reached = d_xy >= dxy_limit
     if return_args:
-        return d_xy, False, std_s1, std_s2, tavg_s1, tavg_s2, s1, s2
+        return d_xy, limit_reached, std_s1, std_s2, tavg_s1, tavg_s2, s1, s2
     else:
-        return d_xy, False
+        return d_xy, limit_reached
 
+
+def cmin(x, idx_x, y, idx_y, n, phi, t_avg_y):
+    c_min = np.inf
+    d = 0
+    dmin = 0
+    time_y = y[0, idx_y]  # Start time of y
+    time_x = x[0, idx_x]  # Start time of x
+    while idx_y + d < n:
+        # We have replaced d in the original paper pseudocode with the normalized time difference dt
+        current_time_y = y[0, idx_y + d]
+        dt = (current_time_y - time_y)/t_avg_y
+        c = pow(phi * dt, 2)
+
+        if c >= c_min:
+            if current_time_y > time_x:
+                break
+        else:
+            c += pow((x[1, idx_x] - y[1, idx_y + d]), 2)
+            if c < c_min:
+                c_min = c
+                dmin = d
+        d += 1
+    idx_x += 1
+    idx_y += dmin + 1
+    return c_min, idx_x, idx_y
 
 def minimumMJC(s1, s2, dXYlimit=np.inf, beta=1, showPlot=False, std_s1=None, std_s2=None, tavg_s1=None, tavg_s2=None,
                overrideChecks=False):
@@ -234,29 +273,3 @@ def MJC(s1, s2, dXYlimit=inf, beta=1, showPlot=False, std_s1=None, std_s2=None, 
                   DeprecationWarning)
     return mjc(s1, s2, dXYlimit, beta, showPlot, std_s1, std_s2, tavg_s1, tavg_s2, returnargs, overrideChecks)
 
-
-def cmin(s1, t1, s2, t2, N, phi, tavg, beta):
-    cmin = np.inf
-    d = 0
-    dmin = 0
-    s2t = s2[0, max(t2 - 1, 0)]  # Start time of series 2
-    fjump = s2[0, t2] - s2t - tavg  # First forced jump length.
-    while t2 + d < N:
-        if d == 0 and fjump > 0:
-            c = pow((phi * (max(s2[0, t2] - s2t - tavg, 0)) / beta), 2)  # The beta of forced jumps are set to 1.
-        else:
-            # We have replaced d with the time difference between the current point and the previous point
-            # that was jumped to, and we also subtract the average jump length to make an "average" first jump costless.
-            c = pow((phi * (max(s2[0, t2] - s2t - tavg, 0))), 2)
-        if c >= cmin:
-            if t2 + d > t1:
-                break
-        else:
-            c += pow((s1[1, t1] - s2[1, t2 + d]), 2)
-            if c < cmin:
-                cmin = c
-                dmin = d
-        d += 1
-    t1 += 1
-    t2 += dmin + 1
-    return cmin, t1, t2

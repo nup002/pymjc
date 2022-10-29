@@ -3,7 +3,9 @@ import numpy.typing as npt
 from typing import Union, Tuple, List
 
 def get_overlapping_region(s1: npt.NDArray[Union[np.integer, np.floating]],
-                           s2: npt.NDArray[Union[np.integer, np.floating]]) -> Tuple[int, ...]: ...
+                           s2: npt.NDArray[Union[np.integer, np.floating]]
+                           ) -> Tuple[npt.NDArray[Union[np.integer, np.floating]],
+                                      npt.NDArray[Union[np.integer, np.floating]]]: ...
 
 
 def check_input(s1: Union[List, npt.NDArray[Union[np.integer, np.floating]]],
