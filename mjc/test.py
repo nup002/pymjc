@@ -1,64 +1,8 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
+
 """
-@author: magne.lauritzen
+Author: 
 """
 
-from mjc import MJC
-import numpy as np
-import unittest
-
-
-def dummy_data(phase=0, with_time=False, time_offset: float = 0):
-    cos_base = np.array(np.cos(np.linspace(0, 4 * np.pi + phase, 100)))
-    amplitude = np.linspace(0, 4 * np.pi, 100)
-    noise = np.random.uniform(-0.1, 0.1, 100)
-    data = amplitude*cos_base + noise
-    if with_time:
-        ret = np.vstack((np.linspace(0, 1, 100) + time_offset, data))
-    else:
-        ret = data
-    return ret
-
-class MJCTester(unittest.TestCase):
-    def test_ndarray_notime(self):
-        s1 = dummy_data()
-        s2 = dummy_data(np.pi/4)
-        MJC(s1, s2)
-
-    def test_ndarray_withtime(self):
-        s1 = dummy_data(with_time=True)
-        s2 = dummy_data(with_time=True, time_offset=0.2)
-        MJC(s1, s2)
-
-    def test_list_notime(self):
-        s1 = list(dummy_data())
-        s2 = list(dummy_data(np.pi/4))
-        MJC(s1, s2)
-
-    def test_list_withtime(self):
-        s1 = list(dummy_data(with_time=True))
-        s2 = list(dummy_data(with_time=True, time_offset=0.2))
-        MJC(s1, s2)
-
-    def test_mismatched_dimensions(self):
-        s1 = dummy_data()
-        s2 = dummy_data(with_time=True)
-        self.assertRaises(ValueError, MJC, s1, s2)
-
-    def test_incorrect_dimensions(self):
-        s1 = np.empty(shape=[1, 1, 1])
-        s2 = dummy_data()
-        self.assertRaises(AssertionError, MJC, s1, s2)
-
-    def test_nonnumeric(self):
-        s1 = dummy_data().astype(np.bool_)
-        s2 = dummy_data().astype(np.bool_)
-        self.assertRaises(AssertionError, MJC, s1, s2)
-
-    def test_plot(self):
-        s1 = dummy_data(with_time=True)
-        s2 = dummy_data(with_time=True, time_offset=0.1)
-        MJC(s1, s2, show_plot=True)
-
-if __name__ == '__main__':
-    unittest.main()
+def a():
+    return 1
