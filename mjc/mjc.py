@@ -9,6 +9,7 @@ import numpy as np
 def get_overlapping_region(s1, s2):
     """
     Finds the region of s1 and s2 which are overlapping in time, and returns a view of this region for s1 and s2.
+
     Parameters
     ----------
     s1  : np.ndarray. Data series 1.
@@ -37,6 +38,7 @@ def get_overlapping_region(s1, s2):
 def check_input(s1, s2, override_checks):
     """
     Performs checks on input data to verify that they conform to the required format for the MJC algorithm.
+
     Parameters
     ----------
     s1              : List or np.ndarray. Data series 1.
@@ -73,9 +75,14 @@ def check_input(s1, s2, override_checks):
             s2 = np.array([np.arange(s2.shape[0]), s2])
     return s1, s2
 
+
 def dmjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=None, tavg_s1=None,
                 tavg_s2=None, override_checks=False):
-    """ Computes the Minimum Jump Cost between s1 and s2 and between s2 and s1, and returns the lowest value."""
+    """
+    This is the symmetrized version of the Minimum Jump Cost dissimilarity measure. Depending whether we start at s1 or
+    s2 we will obtain different values. This computes both and returns the lowest value.
+
+    See mjc() for definition of variables and return values. """
     dxy_a, abandoned_a = mjc(s1, s2, dxy_limit, beta, show_plot, std_s1, std_s2, tavg_s1, tavg_s2, return_args=True,
                              override_checks=override_checks)
     dxy_b, abandoned_b = mjc(s2, s1, dxy_limit, beta, show_plot, std_s2, std_s1, tavg_s2, tavg_s1,
@@ -86,12 +93,14 @@ def dmjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2
 def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=None, tavg_s1=None, tavg_s2=None,
         return_args=False, override_checks=False):
     """
-    Minimum Jump Cost (MJC) dissimiliarity algorithm.
+    Minimum Jump Cost (MJC) dissimiliarity measure.
     This algorithm implements the MJC algorithm devised by Joan Serra and Josep Lluis Arcos (2012). This algorithm was
     shown to outperform the Dynamic Time Warp (DTW) dissimilarity algorithm on several datasets.
 
     mjc() takes two time series s1 and s2 and computes the minimum jump cost between them.
-    It has been modified so that it can compute the MJC of time series that have arbitrarily spaced data points.
+    It has been modified so that it can compute the MJC of time series that have arbitrarily spaced data points,
+    different sampling rates, and non-overlapping regions.
+
     An early abandoning variable, dXYlimit, allows the user to specify a maximum dissimilarity that will cancel the
     computation.
 
