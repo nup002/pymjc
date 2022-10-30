@@ -8,13 +8,13 @@ import numpy as np
 import unittest
 
 
-def dummy_data(phase=0, with_time=False, time_offset: float = 0):
-    cos_base = np.array(np.cos(np.linspace(0, 4 * np.pi + phase, 100)))
-    amplitude = np.linspace(0, 4 * np.pi, 100)
-    noise = np.random.uniform(-0.1, 0.1, 100)
-    data = amplitude*cos_base + noise
+def dummy_data(phase=0, with_time=False, fs: int = 100, offset=0):
+    cos_base = np.array(np.cos(np.linspace(0, 4 * np.pi + phase, fs)))
+    amplitude = np.linspace(0, 4 * np.pi, fs)
+    noise = np.random.uniform(-0.1, 0.1, fs)
+    data = amplitude*cos_base + noise + offset
     if with_time:
-        ret = np.vstack((np.linspace(0, 1, 100) + time_offset, data))
+        ret = np.vstack((np.linspace(0, 1, fs), data))
     else:
         ret = data
     return ret
@@ -27,7 +27,7 @@ class mjcTester(unittest.TestCase):
 
     def test_ndarray_withtime(self):
         s1 = dummy_data(with_time=True)
-        s2 = dummy_data(with_time=True, time_offset=0.2)
+        s2 = dummy_data(with_time=True, offset=2)
         mjc(s1, s2)
 
     def test_list_notime(self):
@@ -37,7 +37,7 @@ class mjcTester(unittest.TestCase):
 
     def test_list_withtime(self):
         s1 = list(dummy_data(with_time=True))
-        s2 = list(dummy_data(with_time=True, time_offset=0.2))
+        s2 = list(dummy_data(with_time=True, offset=2))
         mjc(s1, s2)
 
     def test_mismatched_dimensions(self):
@@ -55,10 +55,19 @@ class mjcTester(unittest.TestCase):
         s2 = dummy_data().astype(np.bool_)
         self.assertRaises(AssertionError, mjc, s1, s2)
 
+    def test_overlapping(self):
+        s1 = dummy_data(with_time=True)[:, :-30]
+        s2 = dummy_data(offset=2, with_time=True)[:, 30:]
+        mjc(s1, s2)
+
+    def test_different_sampling_rate(self):
+        s1 = dummy_data(with_time=True)
+        s2 = dummy_data(offset=2, fs=30, with_time=True)
+        mjc(s1, s2)
+
     def test_plot(self):
-        s1 = dummy_data()
-        s2 = dummy_data(time_offset=0)
-        s2 += 2
+        s1 = dummy_data(with_time=True)[:, 30:]
+        s2 = dummy_data(offset=2, fs=30, with_time=True)[:, :-10]
         mjc(s1, s2, show_plot=True)
 
 if __name__ == '__main__':

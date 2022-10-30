@@ -8,7 +8,7 @@ import numpy as np
 
 def get_overlapping_region(s1, s2):
     """
-    Computes the indexes of s1 and s2 that will fetch only the regions of s1 and s2 that are overlapping.
+    Finds the region of s1 and s2 which are overlapping in time, and returns a view of this region for s1 and s2.
     Parameters
     ----------
     s1  : np.ndarray. Data series 1.
@@ -16,10 +16,8 @@ def get_overlapping_region(s1, s2):
 
     Returns
     -------
-    t1  : Int. Start index of s1 region.
-    t2  : Int. Start index of s2 region.
-    s1_length   : Int. Length of s1 region.
-    s2_length   : Int. Length of s2 region.
+    s1_overlapping  : A view of the input array s1 which overlaps with s2.
+    s2_overlapping  : A view of the input array s2 which overlaps with s1.
     """
     s1start = s1[0, 0]
     s2start = s2[0, 0]
@@ -75,7 +73,7 @@ def check_input(s1, s2, override_checks):
             s2 = np.array([np.arange(s2.shape[0]), s2])
     return s1, s2
 
-def minimum_mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=None, tavg_s1=None,
+def dmjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=None, tavg_s1=None,
                 tavg_s2=None, override_checks=False):
     """ Computes the Minimum Jump Cost between s1 and s2 and between s2 and s1, and returns the lowest value."""
     dxy_a, abandoned_a = mjc(s1, s2, dxy_limit, beta, show_plot, std_s1, std_s2, tavg_s1, tavg_s2, return_args=True,
@@ -159,6 +157,7 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
     s2          :   Only returned if return_args=True. Value of s2 used in the computation.
     """
     assert beta >= 0, "'beta' must be greater than 0."
+    assert dxy_limit >= 0, "'dxy_limit' must be greater than 0."
     s1, s2 = check_input(s1, s2, override_checks)
 
     # Plot the two time series, if show_plot is true.
@@ -167,6 +166,7 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
         ax = plt.axes()
         plot(s1[0], s1[1], 'bo', s1[0], s1[1], 'b')
         plot(s2[0], s2[1], 'ro', s2[0], s2[1], 'r')
+        arrow_scale = max(s1[0, -1] - s1[0, 0], s2[0, -1] - s2[0, 0])
 
     # Get views of overlapping region and their lengths
     s1_overlapping, s2_overlapping = get_overlapping_region(s1, s2)
@@ -177,13 +177,21 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
     # not provided.
     if std_s1 is None:
         std_s1 = stdev(s1_overlapping[1])
+    else:
+        assert std_s1 > 0, "'std_s1' must be greater than 0."
     if std_s2 is None:
         std_s2 = stdev(s2_overlapping[1])
+    else:
+        assert std_s2 > 0, "'std_s2' must be greater than 0."
     std_mean = std_s1 + std_s2
     if tavg_s1 is None:
         tavg_s1 = np.average(np.ediff1d(s1_overlapping[0]))
+    else:
+        assert tavg_s1 > 0, "'tavg_s1' must be greater than 0."
     if tavg_s2 is None:
         tavg_s2 = np.average(np.ediff1d(s2_overlapping[0]))
+    else:
+        assert tavg_s2 > 0, "'tavg_s2' must be greater than 0."
 
     # Compute time advancement cost phi. In the original paper, it is unclear how the standard deviation is calculated.
     # I am assuming it is a mean of the standard deviation of both timeseries.
@@ -198,34 +206,35 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
     dxy_limit = dxy_limit * beta
     idx_x = idx_y = 0
     while idx_x < s1_length and idx_y < s2_length:
-        c, idx_x, idx_y = cmin(s1, idx_x, s2, idx_y, s2_length, phi2, tavg_s2)
+        c, idx_x, idx_y, _idx_x, _idx_y = cmin(s1_overlapping, idx_x, s2_overlapping, idx_y, s2_length, phi2, tavg_s1, tavg_s2)
         d_xy += c
         if show_plot:
-            s1_point = s1[:, idx_x - 1]
-            s2_point = s2[:, idx_y - 1]
+            s1_point = s1_overlapping[:, _idx_x]
+            s2_point = s2_overlapping[:, _idx_y]
             ax.arrow(s1_point[0], s1_point[1],
                      s2_point[0] - s1_point[0],
                      s2_point[1] - s1_point[1],
-                     width=0.005, head_width=0.1)
+                     width=0.002*arrow_scale)
 
         # Break out of loop if end of datasets have been reached or the d_xy limit has been crossed.
         if idx_x >= s1_length or idx_y >= s2_length or d_xy >= dxy_limit:
             break
 
-        c, idx_y, idx_x = cmin(s2, idx_y, s1, idx_x, s1_length, phi1, tavg_s1)
+        c, idx_y, idx_x, _idx_y, _idx_x = cmin(s2_overlapping, idx_y, s1_overlapping, idx_x, s1_length, phi1, tavg_s2, tavg_s1)
         d_xy += c
         if show_plot:
-            s1_point = s1[:, idx_x - 1]
-            s2_point = s2[:, idx_y - 1]
+            s1_point = s1_overlapping[:, _idx_x]
+            s2_point = s2_overlapping[:, _idx_y]
             ax.arrow(s2_point[0], s2_point[1],
                      s1_point[0] - s2_point[0],
                      s1_point[1] - s2_point[1],
-                     width=0.005, head_width=0.1)
+                     width=0.002*arrow_scale)
         # Break out of loop if the d_xy limit has been crossed
         if d_xy >= dxy_limit:
             break
 
     if show_plot:
+        plt.title(f"Dissimilarity measure dXY (total jump cost): {d_xy:.3f}")
         plt.show()
 
     limit_reached = d_xy >= dxy_limit
@@ -235,7 +244,7 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
         return d_xy, limit_reached
 
 
-def cmin(x, idx_x, y, idx_y, n, phi, t_avg_y):
+def cmin(x, idx_x, y, idx_y, n, phi, t_avg_x, t_avg_y):
     c_min = np.inf
     d = 0
     dmin = 0
@@ -256,15 +265,17 @@ def cmin(x, idx_x, y, idx_y, n, phi, t_avg_y):
                 c_min = c
                 dmin = d
         d += 1
-    idx_x += 1
-    idx_y += dmin + 1
-    return c_min, idx_x, idx_y
+    _idx_x = idx_x
+    _idx_y = idx_y
+    idx_x += max(1, int(t_avg_y/t_avg_x))
+    idx_y += dmin + max(1, int(t_avg_x/t_avg_y))
+    return c_min, idx_x, idx_y, _idx_x, _idx_y
 
 def minimumMJC(s1, s2, dXYlimit=np.inf, beta=1, showPlot=False, std_s1=None, std_s2=None, tavg_s1=None, tavg_s2=None,
                overrideChecks=False):
-    warnings.warn("minimumMJC is deprecated and will be removed in a future release. Use minimum_mjc() instead.",
+    warnings.warn("minimumMJC is deprecated and will be removed in a future release. Use dmjc() instead.",
                   DeprecationWarning)
-    return minimum_mjc(s1, s2, dXYlimit, beta, showPlot, std_s1, std_s2, tavg_s1, tavg_s2, overrideChecks)
+    return dmjc(s1, s2, dXYlimit, beta, showPlot, std_s1, std_s2, tavg_s1, tavg_s2, overrideChecks)
 
 
 def MJC(s1, s2, dXYlimit=inf, beta=1, showPlot=False, std_s1=None, std_s2=None, tavg_s1=None, tavg_s2=None,

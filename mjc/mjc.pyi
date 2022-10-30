@@ -13,7 +13,7 @@ def check_input(s1: Union[List, npt.NDArray[Union[np.integer, np.floating]]],
                 override_checks: bool) -> Tuple[npt.NDArray[Union[np.integer, np.floating]],
                                                 npt.NDArray[Union[np.integer, np.floating]]]: ...
 
-def minimum_mjc(s1: Union[List, npt.NDArray[Union[np.integer, np.floating]]],
+def dmjc(s1: Union[List, npt.NDArray[Union[np.integer, np.floating]]],
                 s2: Union[List, npt.NDArray[Union[np.integer, np.floating]]],
                 dxy_limit: float = np.inf,
                 beta: float = 1.,
@@ -57,3 +57,13 @@ def minimumMJC(s1: Union[List, npt.NDArray[Union[np.integer, np.floating]]],
                 tavg_s1: float = None, tavg_s2: float = None,
                 returnargs: bool = False,
                 overrideChecks: bool = False) -> Union[Tuple[float, bool]]: ...
+
+
+def cmin(x: npt.NDArray[Union[np.integer, np.floating]],
+         idx_x: int,
+         y:npt.NDArray[Union[np.integer, np.floating]],
+         idx_y: int,
+         n: int,
+         phi: float,
+         t_avg_x: float,
+         t_avg_y: float) -> Tuple[float, int, int, int, int]: ...
