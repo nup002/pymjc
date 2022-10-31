@@ -1,66 +1,76 @@
 # Minimum Jump Cost algorithm
 
-This python code implements the Minimum Jump Cost (MJC) algorithm dissimilarity algorithm devised by Joan Serra and Josep Lluis Arcos in 2012. MJC was shown to be computationally fast, and sometimes even more accurate than Dynamic Time Warp (DTW). You can read the paper here: 
-https://www.iiia.csic.es/sites/default/files/4584.pdf
+This package implements the Minimum Jump Cost (MJC) dissimilarity measure devised by Joan Serra and Josep Lluis Arcos in 2012. MJC was shown to be computationally fast, and sometimes even more accurate than Dynamic Time Warp (DTW). You can read the paper here: 
+https://www.iiia.csic.es/sites/default/files/4584.pdf.
+
+This package can compute the MJC for timeseries with different sampling rates, arbitrarily spaced data points, and 
+non-overlapping regions.
 
 ## How to install
 
-Open a command window or bash shell. Run `pip install mjc`. 
+```pip install mjc``` 
 
 ## How to use
 Example: 
 ```
-from mjc import MJC
+from mjc import mjc
+import numpy as np
 
-series_1 = [1,3,7,2]
-series_2 = [3,1,2.2,0.1]
+series_1 = np.array([1,2,3,4])
+series_2 = np.array([2,3,4,5])
 
-dXY, abandoned = MJC(series_1, series_2)
+d_xy, abandoned = mjc(series_1, series_2, show_plot=True)
 
-print("The dissimilarity of series 1 and series 2 is {}".format(dXY))
+print(f"The MJC dissimilarity of series 1 and series 2 is {d_xy}")
 ```
-There are several options for increasing the execution speed of this algorithm. They are detailed in the next section.
+There are some options for reducing the computational load of this algorithm. They are detailed in the next section.
 
-### More information (from the function docs)
-This function takes two time series s1 and s2 and computes the minimum jump cost between them. 
-It has been modified so that it can compute the MJC of time series that have arbitrarily spaced data points. 
-An early abandoning variable, dXYlimit, allows the user to specify a maximum dissimilarity that will cancel the computation.
-
-The time series are specified as follows:
-- s1 and s2 may be of different length. 
-- s1 and s2 may or may not have time information.
+## More detailed information
+The time series s1 and s2 are specified as follows:
+- They may be python Lists or numpy.ndarrays
+- They may be of different length.
+- They may or may not have time information.
 - If one of the time series has time information, the other must also have it.
-    
-A time series with no time information is just an array of values. The first element of the array corresponds to the earliest point in the time series. Example: s1 = [d_0, d_1, d_2, ...], where d_i is the ith value of the time series.
-A tme series with time information must be an array of two arrays. The first holds the time information of each point (i.e. the x-axis values), and the other array holds the amplitude data (i.e. the y-axis values). Example: s1 = [[t_0, t_1, t_2, ...], [d_0, d_1, d_2, ...]], where d_i is the ith value of the time series, and t_i is the time of the ith measurement.
-The time values may be integers or floats, and need not begin at 0.
+- Their datatype may be floats or integers.
 
-To visualize the algorithm, you may pass the variable showPlot=True. This will generate a plot with the two time series, and arrows signifying the jumps that the algorithm made when calculating the Minimum Jump Cost.    
+A time series with no time information is just a list of values. The first element of the list corresponds to
+the earliest point in the time series.<br>
+Example: `s1 = [d₀, d₁, d₂, ...]`, where `dᵢ` is the i-th value of the time series.
 
-#### EXECUTION SPEED
-The time series are cast to numpy arrays. The checking and casting lowers execution speed. Therefore, an option to disable this 
-checking and casting has been implemented. If you are absolutely sure that the time series s1 and s2 are numpy.ndarray's of the 
-format ([time data],[amplitude data]), you may pass the variable overrideChecks=True.
+A time series with time information must be a 2D array of shape (2, n). The data at index 0 are time
+data, and the data at index 1 is amplitude data.<br>
+Example: `s1 = [[t₀, t₁, t₂, ...], [d₀, d₁, d₂, ...]]`, where `tᵢ` is the time of the i-th measurement. The time 
+values may be integers or floats, and need not begin at 0.
 
-As part of the calculation of the MJC, the algorithm calculates the standard deviations of s1 and s2. This lowers execution speed,
-but is required. However, if you know the standard deviations of either (or both) s1 and s2 a priori, you may pass these as variables.
-They are named stds1 and stds2.
+To visualize the algorithm, you may pass the variable `show_plot=True`. This will generate a plot with the two time
+series, and arrows signifying the jumps that the algorithm made when calculating the Minimum Jump Cost.
 
+To stop the algorithm early, pass a value for `dxy_limit`. If the dissimilarity measure exceeds this value during 
+computation, it is abandoned.
+
+
+### Performance
+The time series are cast to numpy arrays. The checking and casting lowers execution speed. Therefore, an option to
+disable this checking and casting has been implemented. If you are certain that the time series s1 and s2
+are numpy.ndarray's of the format `[[time data],[amplitude data]]`, you may pass the variable `override_checks=True`.
+
+As part of the calculation of the MJC, the algorithm calculates the standard deviations of the amplitude data, and
+the average sampling period of s1 and s2. This lowers execution speed, but is required.
+However, if you know the standard deviations and/or the average time difference between data points of either
+(or both) s1 and s2 a priori, you may pass these as variables. They are named std_s1 and std_s2 and tavg_s1 and
+tavg_s2. Any number of these may be passed. The ones which are not passed will be calculated.
+
+mjc() input parameters:
 ```
-Parameters
-----------
-s1              : Time series 1. 
-s2              : Time series 2. 
-dXYlimit        : Optional early abandoning variable. If the dissimilarity goes above this limit the 
-computation is cancelled.
-beta            : Optional time jump cost. Defaults to 1. If 0, there is no cost associated with jumping forward.
-overrideChecks  : Optional. Override checking if the supplied time series conform to the required format. See the section EXECUTION SPEED above for more information.
-showPlot        : Optional. Defaults to False. If True, displays a plot that visualize the algorithms jump path at the end of the computation.
-stds1           : Optional. Standard deviation of time series s1 amplitude data. See the section EXECUTION SPEED above for more information.
-stds2           : Optional. Standard deviation of time series s2 amplitude data. See the section EXECUTION SPEED above for more information.
-    
-Returns
--------
-dXY         :   Cumulative dissimilarity measure.
-cancelled   :   Boolean. If True, the computation was cancelled as dXY reached dXYlimit.
+s1              : numpy ndarray | List. Time series 1.
+s2              : numpy ndarray | List. Time series 2.
+dxy_limit       : Optional float. Early abandoning variable.
+beta            : Optional float. Time jump cost. 
+show_plot       : Optional bool. If True, displays a plot that visualize the algorithms jump path. Default False.
+std_s1          : Optional float. Standard deviation of time series s1.
+std_s2          : Optional float. Standard deviation of time series s2.
+tavg_s1         : Optional float. Average sampling period of time series 1.
+tavg_s2         : Optional float. Average sampling period of time series 2. 
+return_args     : Optional bool. If True, returns the values for std_s1, std_s2, tavg_s1, tavg_s2, s1, and s2.
+override_checks : Optional bool. Override checking and casting
 ```

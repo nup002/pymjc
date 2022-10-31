@@ -120,39 +120,37 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
     To visualize the algorithm, you may pass the variable showPlot=True. This will generate a plot with the two time
     series, and arrows signifying the jumps that the algorithm made when calculating the Minimum Jump Cost.
 
-    ----EXECUTION SPEED----
+    ---- PERFORMANCE ----
     The time series are cast to numpy arrays. The checking and casting lowers execution speed. Therefore, an option to
-    disable this checking and casting has been implemented. If you are absolutely sure that the time series s1 and s2
-    are numpy.ndarray's of the format ([time data],[amplitude data]), you may pass the variable override_checks=True.
+    disable this checking and casting has been implemented. If you are certain that the time series s1 and s2
+    are numpy.ndarray's of the format [[time data],[amplitude data]], you may pass the variable override_checks=True.
 
     As part of the calculation of the MJC, the algorithm calculates the standard deviations of the amplitude data, and
-    the average length of time between each data point of s1 and s2. This lowers execution speed, but is required.
+    the average sampling period of s1 and s2. This lowers execution speed, but is required.
     However, if you know the standard deviations and/or the average time difference between data points of either
     (or both) s1 and s2 a priori, you may pass these as variables. They are named std_s1 and std_s2 and tavg_s1 and
-    tavg_s2. None, any, or all of these may be passed.
+    tavg_s2. Any number of these may be passed. The ones which are not passed will be calculated.
 
 
     Parameters
     ----------
-    s1              : Time series 1.
-    s2              : Time series 2.
-    dxy_limit       : Optional early abandoning variable. If the dissimilarity goes above this limit the computation is
-        cancelled.
-    beta            : Optional time jump cost. Defaults to 1. If 0, there is no cost associated with jumping forward.
-    show_plot        : Optional. Defaults to False. If True, displays a plot that visualize the algorithms jump path at
-        the end of the computation.
-    std_s1          : Optional. Standard deviation of time series s1 amplitude data. See the section EXECUTION SPEED
-        above for more information.
-    std_s2          : Optional. Standard deviation of time series s2 amplitude data. See the section EXECUTION SPEED
-        above for more information.
-    tavg_s1         : Optional. Average value of time difference between consecutive data points of time series 1. See
-        the section EXECUTION SPEED above for more information.
-    tavg_s2         : Optional. Average value of time difference between consecutive data points of time series 2. See
-        the section EXECUTION SPEED above for more information.
-    return_args      : Optional. Causes the function to return the values for std_s1, std_s2, tavg_s1, tavg_s2, s1, and
-        s2.
-    override_checks  : Optional. Override checking if the supplied time series conform to the required format. See the
-        section EXECUTION SPEED above for more information.
+    s1              : numpy ndarray. Time series 1.
+    s2              : numpy ndarray. Time series 2.
+    dxy_limit       : Optional float. Early abandoning variable. If the dissimilarity measure exceeds this limit the
+        computation is cancelled. Default infinity.
+    beta            : Optional float. Time jump cost. If 0, there is no cost associated with jumping forward. Default 1.
+    show_plot       : Optional bool. If True, displays a plot that visualize the algorithms jump path. Default False.
+    std_s1          : Optional float. Standard deviation of time series s1. See the section PERFORMANCE above for more
+        information.
+    std_s2          : Optional float. Standard deviation of time series s2. See the section PERFORMANCE above for more
+        information.
+    tavg_s1         : Optional float. Average sampling period of time series 1. See the section PERFORMANCE above for
+        more information. If your data does not have time information, this value can be set to 1.
+    tavg_s2         : Optional float. Average sampling period of time series 2. See the section PERFORMANCE above for
+        more information. If your data does not have time information, this value can be set to 1.
+    return_args      : Optional bool. If True, returns the values for std_s1, std_s2, tavg_s1, tavg_s2, s1, and s2.
+    override_checks  : Optional bool. Override checking and casting if the supplied time series are known to conform to
+        the required format. See the section PERFORMANCE above for more information.
 
     Returns
     -------
@@ -292,4 +290,3 @@ def MJC(s1, s2, dXYlimit=inf, beta=1, showPlot=False, std_s1=None, std_s2=None, 
     warnings.warn("MJC is deprecated and will be removed in the a future release. Use minimum_mjc() instead.",
                   DeprecationWarning)
     return mjc(s1, s2, dXYlimit, beta, showPlot, std_s1, std_s2, tavg_s1, tavg_s2, returnargs, overrideChecks)
-
