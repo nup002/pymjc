@@ -1,4 +1,4 @@
-# Minimum Jump Cost algorithm
+# Minimum Jump Cost in Python
 
 This package implements the Minimum Jump Cost (MJC) dissimilarity measure devised by Joan Serra and Josep Lluis Arcos in 2012. MJC was shown to be computationally fast, and sometimes even more accurate than Dynamic Time Warp (DTW). You can read the paper here: 
 https://www.iiia.csic.es/sites/default/files/4584.pdf.
@@ -7,8 +7,8 @@ This package can compute the MJC for timeseries with different sampling rates, a
 non-overlapping regions.
 
 ## How to install
+The 'mjc' package on PyPi is non-functional. Instead, download this repository directly. I am working on publishing it to PyPi at this moment, and it should be ready within a week (before 10 December 2022).
 
-```pip install mjc``` 
 
 ## How to use
 Example: 
