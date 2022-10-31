@@ -3,7 +3,7 @@
 @author: magne.lauritzen
 """
 
-from mjc import mjc
+from src.mjc import mjc
 import numpy as np
 import unittest
 
@@ -12,17 +12,18 @@ def dummy_data(phase=0, with_time=False, fs: int = 100, offset=0):
     cos_base = np.array(np.cos(np.linspace(0, 4 * np.pi + phase, fs)))
     amplitude = np.linspace(0, 4 * np.pi, fs)
     noise = np.random.uniform(-0.1, 0.1, fs)
-    data = amplitude*cos_base + noise + offset
+    data = amplitude * cos_base + noise + offset
     if with_time:
         ret = np.vstack((np.linspace(0, 1, fs), data))
     else:
         ret = data
     return ret
 
+
 class mjcTester(unittest.TestCase):
     def test_ndarray_notime(self):
         s1 = dummy_data()
-        s2 = dummy_data(np.pi/4)
+        s2 = dummy_data(np.pi / 4)
         mjc(s1, s2)
 
     def test_ndarray_withtime(self):
@@ -32,7 +33,7 @@ class mjcTester(unittest.TestCase):
 
     def test_list_notime(self):
         s1 = list(dummy_data())
-        s2 = list(dummy_data(np.pi/4))
+        s2 = list(dummy_data(np.pi / 4))
         mjc(s1, s2)
 
     def test_list_withtime(self):
@@ -69,6 +70,7 @@ class mjcTester(unittest.TestCase):
         s1 = dummy_data(with_time=True)[:, 30:]
         s2 = dummy_data(offset=2, fs=30, with_time=True)[:, :-10]
         mjc(s1, s2, show_plot=True)
+
 
 if __name__ == '__main__':
     unittest.main()

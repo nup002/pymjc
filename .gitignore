@@ -1,4 +1,4 @@
 mjc.egg-info/*
 dist/*
 setup.py
-mjc/__pycache__/*
+src/mjc/__pycache__/*
