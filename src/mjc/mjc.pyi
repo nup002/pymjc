@@ -2,6 +2,14 @@ import numpy as np
 import numpy.typing as npt
 from typing import Union, Tuple, List
 
+
+def analyse_timeseries(std_s1: Union[float, None],
+                       std_s2: Union[float, None],
+                       tavg_s1: Union[float, None],
+                       tavg_s2: Union[float, None],
+                       s1: npt.NDArray[Union[np.integer, np.floating]],
+                       s2: npt.NDArray[Union[np.integer, np.floating]]) -> Tuple[float, ...]: ...
+
 def get_overlapping_region(s1: npt.NDArray[Union[np.integer, np.floating]],
                            s2: npt.NDArray[Union[np.integer, np.floating]]
                            ) -> Tuple[npt.NDArray[Union[np.integer, np.floating]],
