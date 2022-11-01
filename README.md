@@ -1,4 +1,7 @@
-# Minimum Jump Cost in Python
+![LICENCE](https://img.shields.io/github/license/nup002/mjc)
+[![Flake8](https://github.com/nup002/mjc/actions/workflows/flake8.yml/badge.svg)](https://github.com/nup002/mjc/actions/workflows/flake8.yml)
+[![PyTest](https://github.com/nup002/mjc/actions/workflows/PyTest.yml/badge.svg)](https://github.com/nup002/mjc/actions/workflows/PyTest.yml)
+# Minimum Jump Cost dissimilarity measure in Python
 
 This package implements the Minimum Jump Cost (MJC) dissimilarity measure devised by Joan Serra and Josep Lluis Arcos in 2012. MJC was shown to be computationally fast, and sometimes even more accurate than Dynamic Time Warp (DTW). You can read the paper here: 
 https://www.iiia.csic.es/sites/default/files/4584.pdf.
