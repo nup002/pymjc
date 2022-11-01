@@ -208,7 +208,7 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
     d_xy = 0
 
     # Begin computation of the cumulative dissimilarity measure.
-    jumps = np.empty(shape=(2, min(s1_length, s2_length)), dtype=int)
+    jumps = np.empty(shape=(min(s1_length, s2_length), 2), dtype=int)
     dxy_limit = dxy_limit * beta
     idx_x = idx_y = 0
     n = 0
@@ -226,14 +226,15 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
         c, idx_y, idx_x, _idx_y, _idx_x = cmin(s2_ovrlap, idx_y, s1_ovrlap, idx_x, s1_length, phi1, tavg_s2,
                                                tavg_s1)
         d_xy += c
-        jumps[n] = [_idx_x, _idx_y]
+        jumps[n] = [_idx_y, _idx_x]
         n += 1
 
         # Break out of loop if the d_xy limit has been crossed
         if d_xy >= dxy_limit:
             break
 
-    # Plot the two time series, if show_plot is true.
+    jumps = jumps[:n]
+    # Plot the two time series and the jumps between them, if show_plot is true.
     if show_plot:
         plt.figure(figsize=(13, 7))
         ax = plt.axes()
@@ -243,8 +244,8 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
         plt.title(f"Dissimilarity measure dXY (total jump cost): {d_xy:.3f}")
         for n, jump in enumerate(jumps):
             p0 = s1_ovrlap[:, jump[0]] if n % 2 == 0 else s2_ovrlap[:, jump[0]]
-            p1 = s2_ovrlap[:, jump[1]] if n % 2 == 0 else s1_ovrlap[:, jump[0]]
-            ax.arrow(p0[0], p0[1], p1[0] - p1[0], p0[1] - p0[1], width=0.002 * arrow_scale)
+            p1 = s2_ovrlap[:, jump[1]] if n % 2 == 0 else s1_ovrlap[:, jump[1]]
+            ax.arrow(p0[0], p0[1], p1[0] - p0[0], p1[1] - p0[1], width=0.002 * arrow_scale)
         plt.show()
 
     limit_reached = d_xy >= dxy_limit
