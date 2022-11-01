@@ -6,6 +6,27 @@ import warnings
 import numpy as np
 
 
+def analyse_timeseries(std_s1, std_s2, tavg_s1, tavg_s2, s1, s2):
+    if std_s1 is None:
+        std_s1 = stdev(s1[1])
+    else:
+        assert std_s1 > 0, "'std_s1' must be greater than 0."
+    if std_s2 is None:
+        std_s2 = stdev(s2[1])
+    else:
+        assert std_s2 > 0, "'std_s2' must be greater than 0."
+    if tavg_s1 is None:
+        tavg_s1 = np.average(np.ediff1d(s1[0]))
+    else:
+        assert tavg_s1 > 0, "'tavg_s1' must be greater than 0."
+    if tavg_s2 is None:
+        tavg_s2 = np.average(np.ediff1d(s2[0]))
+    else:
+        assert tavg_s2 > 0, "'tavg_s2' must be greater than 0."
+
+    return std_s1, std_s2, tavg_s1, tavg_s2
+
+
 def get_overlapping_region(s1, s2):
     """
     Finds the region of s1 and s2 which are overlapping in time, and returns a view of this region for s1 and s2.
@@ -77,7 +98,7 @@ def check_input(s1, s2, override_checks):
 
 
 def dmjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=None, tavg_s1=None,
-                tavg_s2=None, override_checks=False):
+         tavg_s2=None, override_checks=False):
     """
     This is the symmetrized version of the Minimum Jump Cost dissimilarity measure. Depending whether we start at s1 or
     s2 we will obtain different values. This computes both and returns the lowest value.
@@ -167,38 +188,15 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
     assert dxy_limit >= 0, "'dxy_limit' must be greater than 0."
     s1, s2 = check_input(s1, s2, override_checks)
 
-    # Plot the two time series, if show_plot is true.
-    if show_plot:
-        fig = plt.figure(figsize=(13, 7))
-        ax = plt.axes()
-        plot(s1[0], s1[1], 'bo', s1[0], s1[1], 'b')
-        plot(s2[0], s2[1], 'ro', s2[0], s2[1], 'r')
-        arrow_scale = max(s1[0, -1] - s1[0, 0], s2[0, -1] - s2[0, 0])
-
     # Get views of overlapping region and their lengths
-    s1_overlapping, s2_overlapping = get_overlapping_region(s1, s2)
-    s1_length = s1_overlapping.shape[1]
-    s2_length = s2_overlapping.shape[1]
+    s1_ovrlap, s2_ovrlap = get_overlapping_region(s1, s2)
+    s1_length = s1_ovrlap.shape[1]
+    s2_length = s2_ovrlap.shape[1]
 
     # Compute the standard deviations of s1 and s2 and the average time between data points in s1 and s2 if they are
     # not provided.
-    if std_s1 is None:
-        std_s1 = stdev(s1_overlapping[1])
-    else:
-        assert std_s1 > 0, "'std_s1' must be greater than 0."
-    if std_s2 is None:
-        std_s2 = stdev(s2_overlapping[1])
-    else:
-        assert std_s2 > 0, "'std_s2' must be greater than 0."
-    std_mean = std_s1 + std_s2
-    if tavg_s1 is None:
-        tavg_s1 = np.average(np.ediff1d(s1_overlapping[0]))
-    else:
-        assert tavg_s1 > 0, "'tavg_s1' must be greater than 0."
-    if tavg_s2 is None:
-        tavg_s2 = np.average(np.ediff1d(s2_overlapping[0]))
-    else:
-        assert tavg_s2 > 0, "'tavg_s2' must be greater than 0."
+    std_s1, std_s2, tavg_s1, tavg_s2 = analyse_timeseries(std_s1, std_s2, tavg_s1, tavg_s2, s1_ovrlap, s2_ovrlap)
+    std_mean = (std_s1 + std_s2) / 2
 
     # Compute time advancement cost phi. In the original paper, it is unclear how the standard deviation is calculated.
     # I am assuming it is a mean of the standard deviation of both timeseries.
@@ -210,38 +208,43 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
     d_xy = 0
 
     # Begin computation of the cumulative dissimilarity measure.
+    jumps = np.empty(shape=(2, min(s1_length, s2_length)), dtype=int)
     dxy_limit = dxy_limit * beta
     idx_x = idx_y = 0
+    n = 0
     while idx_x < s1_length and idx_y < s2_length:
-        c, idx_x, idx_y, _idx_x, _idx_y = cmin(s1_overlapping, idx_x, s2_overlapping, idx_y, s2_length, phi2, tavg_s1, tavg_s2)
+        c, idx_x, idx_y, _idx_x, _idx_y = cmin(s1_ovrlap, idx_x, s2_ovrlap, idx_y, s2_length, phi2, tavg_s1,
+                                               tavg_s2)
         d_xy += c
-        if show_plot:
-            s1_point = s1_overlapping[:, _idx_x]
-            s2_point = s2_overlapping[:, _idx_y]
-            ax.arrow(s1_point[0], s1_point[1],
-                     s2_point[0] - s1_point[0],
-                     s2_point[1] - s1_point[1],
-                     width=0.002*arrow_scale)
+        jumps[n] = [_idx_x, _idx_y]
+        n += 1
 
         # Break out of loop if end of datasets have been reached or the d_xy limit has been crossed.
         if idx_x >= s1_length or idx_y >= s2_length or d_xy >= dxy_limit:
             break
 
-        c, idx_y, idx_x, _idx_y, _idx_x = cmin(s2_overlapping, idx_y, s1_overlapping, idx_x, s1_length, phi1, tavg_s2, tavg_s1)
+        c, idx_y, idx_x, _idx_y, _idx_x = cmin(s2_ovrlap, idx_y, s1_ovrlap, idx_x, s1_length, phi1, tavg_s2,
+                                               tavg_s1)
         d_xy += c
-        if show_plot:
-            s1_point = s1_overlapping[:, _idx_x]
-            s2_point = s2_overlapping[:, _idx_y]
-            ax.arrow(s2_point[0], s2_point[1],
-                     s1_point[0] - s2_point[0],
-                     s1_point[1] - s2_point[1],
-                     width=0.002*arrow_scale)
+        jumps[n] = [_idx_x, _idx_y]
+        n += 1
+
         # Break out of loop if the d_xy limit has been crossed
         if d_xy >= dxy_limit:
             break
 
+    # Plot the two time series, if show_plot is true.
     if show_plot:
+        plt.figure(figsize=(13, 7))
+        ax = plt.axes()
+        plot(s1[0], s1[1], 'bo', s1[0], s1[1], 'b')
+        plot(s2[0], s2[1], 'ro', s2[0], s2[1], 'r')
+        arrow_scale = max(s1[0, -1] - s1[0, 0], s2[0, -1] - s2[0, 0])
         plt.title(f"Dissimilarity measure dXY (total jump cost): {d_xy:.3f}")
+        for n, jump in enumerate(jumps):
+            p0 = s1_ovrlap[:, jump[0]] if n % 2 == 0 else s2_ovrlap[:, jump[0]]
+            p1 = s2_ovrlap[:, jump[1]] if n % 2 == 0 else s1_ovrlap[:, jump[0]]
+            ax.arrow(p0[0], p0[1], p1[0] - p1[0], p0[1] - p0[1], width=0.002 * arrow_scale)
         plt.show()
 
     limit_reached = d_xy >= dxy_limit
@@ -260,7 +263,7 @@ def cmin(x, idx_x, y, idx_y, n, phi, t_avg_x, t_avg_y):
     while idx_y + d < n:
         # We have replaced d in the original paper pseudocode with the normalized time difference dt
         current_time_y = y[0, idx_y + d]
-        dt = (current_time_y - time_y)/t_avg_y
+        dt = (current_time_y - time_y) / t_avg_y
         c = pow(phi * dt, 2)
 
         if c >= c_min:
@@ -274,9 +277,10 @@ def cmin(x, idx_x, y, idx_y, n, phi, t_avg_x, t_avg_y):
         d += 1
     _idx_x = idx_x
     _idx_y = idx_y
-    idx_x += max(1, int(t_avg_y/t_avg_x))
-    idx_y += dmin + max(1, int(t_avg_x/t_avg_y))
+    idx_x += max(1, int(t_avg_y / t_avg_x))
+    idx_y += dmin + max(1, int(t_avg_x / t_avg_y))
     return c_min, idx_x, idx_y, _idx_x, _idx_y
+
 
 def minimumMJC(s1, s2, dXYlimit=np.inf, beta=1, showPlot=False, std_s1=None, std_s2=None, tavg_s1=None, tavg_s2=None,
                overrideChecks=False):
