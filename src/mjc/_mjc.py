@@ -85,8 +85,8 @@ def check_input(s1, s2, override_checks):
                              f"s1 is {s1.ndim}D, s2 is {s2.ndim}D.")
 
         # Assert that data is numeric
-        assert np.issubdtype(s1.dtype, np.number), f"Series s1 must be numeric, not {s1.dtype=}."
-        assert np.issubdtype(s2.dtype, np.number), f"Series s2 must be numeric, not {s2.dtype=}."
+        assert np.issubdtype(s1.dtype, np.number), f"Series s1 must be numeric, not {s1.dtype}."
+        assert np.issubdtype(s2.dtype, np.number), f"Series s2 must be numeric, not {s2.dtype}."
 
         # Generate dummy time info so that the algorithm can work.
         if s1.ndim != 2:
