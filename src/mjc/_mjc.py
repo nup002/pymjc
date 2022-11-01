@@ -1,7 +1,6 @@
 from math import inf
 from statistics import stdev
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import plot
 import warnings
 import numpy as np
 
@@ -238,8 +237,8 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
     if show_plot:
         plt.figure(figsize=(13, 7))
         ax = plt.axes()
-        plot(s1[0], s1[1], 'bo', s1[0], s1[1], 'b')
-        plot(s2[0], s2[1], 'ro', s2[0], s2[1], 'r')
+        plt.plot(s1[0], s1[1], 'bo', s1[0], s1[1], 'b')
+        plt.plot(s2[0], s2[1], 'ro', s2[0], s2[1], 'r')
         arrow_scale = max(s1[0, -1] - s1[0, 0], s2[0, -1] - s2[0, 0])
         plt.title(f"Dissimilarity measure dXY (total jump cost): {d_xy:.3f}")
         for n, jump in enumerate(jumps):

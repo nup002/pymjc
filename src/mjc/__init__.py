@@ -1,1 +1,1 @@
-from .mjc import mjc, dmjc, MJC, minimumMJC
+from ._mjc import mjc, dmjc, MJC, minimumMJC
