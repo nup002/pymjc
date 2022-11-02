@@ -10,7 +10,7 @@ This package can compute the MJC for timeseries with different sampling rates, a
 non-overlapping regions.
 
 ## How to install
-The 'mjc' package on PyPi is non-functional. Instead, download this repository directly. I am working on publishing it to PyPi at this moment, and it should be ready within a week (before 10 December 2022).
+I am working on publishing it to PyPi at this moment, and it should be ready within a week (before 10 December 2022). For now, you will have to download the repository directly and install manually with pip.
 
 
 ## How to use
