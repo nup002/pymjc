@@ -43,29 +43,13 @@ def mjc(s1: Union[List, npt.NDArray[Union[np.integer, np.floating]]],
                                                 npt.NDArray[Union[np.integer, np.floating]],
                                                 npt.NDArray[Union[np.integer, np.floating]]]]: ...
 
-def MJC(s1: Union[List, npt.NDArray[Union[np.integer, np.floating]]],
-        s2: Union[List, npt.NDArray[Union[np.integer, np.floating]]],
-        dXYlimit: float = np.inf,
-        beta: float = 1.,
-        showPlot: bool = False,
-        std_s1: float = None, std_s2: float = None,
-        tavg_s1: float = None, tavg_s2: float = None,
-        returnargs: bool = False,
-        overrideChecks: bool = False) -> Union[Tuple[float, bool],
-                                                Tuple[float, bool, float, float, float, float,
-                                                npt.NDArray[Union[np.integer, np.floating]],
-                                                npt.NDArray[Union[np.integer, np.floating]]]]: ...
-
-def minimumMJC(s1: Union[List, npt.NDArray[Union[np.integer, np.floating]]],
-                s2: Union[List, npt.NDArray[Union[np.integer, np.floating]]],
-                dXYlimit: float = np.inf,
-                beta: float = 1.,
-                showPlot: bool = False,
-                std_s1: float = None, std_s2: float = None,
-                tavg_s1: float = None, tavg_s2: float = None,
-                returnargs: bool = False,
-                overrideChecks: bool = False) -> Union[Tuple[float, bool]]: ...
-
+def jump_cost(x: npt.NDArray[Union[np.integer, np.floating]],
+              y: npt.NDArray[Union[np.integer, np.floating]],
+              dxy_limit: float,
+              beta: float,
+              std: float,
+              tavg_x: float,
+              tavg_y: float) -> Union[float, npt.NDArray[np.integer]]: ...
 
 def cmin(x: npt.NDArray[Union[np.integer, np.floating]],
          idx_x: int,
