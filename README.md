@@ -1,6 +1,6 @@
-![LICENCE](https://img.shields.io/github/license/nup002/mjc)
-[![Flake8](https://github.com/nup002/mjc/actions/workflows/flake8.yml/badge.svg)](https://github.com/nup002/mjc/actions/workflows/flake8.yml)
-[![PyTest](https://github.com/nup002/mjc/actions/workflows/PyTest.yml/badge.svg)](https://github.com/nup002/mjc/actions/workflows/PyTest.yml)
+![LICENCE](https://img.shields.io/github/license/nup002/pymjc)
+[![Flake8](https://github.com/nup002/pymjc/actions/workflows/flake8.yml/badge.svg)](https://github.com/nup002/mjc/actions/workflows/flake8.yml)
+[![PyTest](https://github.com/nup002/pymjc/actions/workflows/PyTest.yml/badge.svg)](https://github.com/nup002/mjc/actions/workflows/PyTest.yml)
 # Minimum Jump Cost dissimilarity measure in Python
 
 This package implements the Minimum Jump Cost (MJC) dissimilarity measure devised by Joan Serra and Josep Lluis Arcos in 2012. MJC was shown to be computationally fast, and sometimes even more accurate than Dynamic Time Warp (DTW). You can read the paper here: 
@@ -16,7 +16,7 @@ The 'mjc' package on PyPi is non-functional. Instead, download this repository d
 ## How to use
 Example: 
 ```
-from mjc import mjc
+from pymjc import mjc
 import numpy as np
 
 series_1 = np.array([1,2,3,4])
