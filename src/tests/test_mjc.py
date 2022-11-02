@@ -6,7 +6,7 @@ import numpy as np
 import unittest
 from unittest.mock import patch
 
-from src.mjc import mjc
+from src.pymjc import mjc
 
 
 def dummy_data(phase=0, with_time=False, fs: int = 100, offset=0):
@@ -67,7 +67,7 @@ class TestMjc(unittest.TestCase):
         s2 = dummy_data(offset=2, fs=30, with_time=True)
         mjc(s1, s2)
 
-    @patch("src.mjc._mjc.plt.show")
+    @patch("src.pymjc._mjc.plt.show")
     def test_plot(self, show_mock):
         s1 = dummy_data(with_time=True)[:, 30:]
         s2 = dummy_data(offset=2, fs=30, with_time=True)[:, :-10]

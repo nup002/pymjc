@@ -1,7 +1,5 @@
-from math import inf
 from statistics import stdev
 import matplotlib.pyplot as plt
-import warnings
 import numpy as np
 
 
@@ -102,7 +100,7 @@ def dmjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2
     This is the symmetrized version of the Minimum Jump Cost dissimilarity measure. Depending whether we start at s1 or
     s2 we will obtain different values. This computes both and returns the lowest value.
 
-    See mjc() for definition of variables and return values. """
+    See pymjc() for definition of variables and return values. """
     dxy_a, abandoned_a = mjc(s1, s2, dxy_limit, beta, show_plot, std_s1, std_s2, tavg_s1, tavg_s2, return_args=True,
                              override_checks=override_checks)
     dxy_b, abandoned_b = mjc(s2, s1, dxy_limit, beta, show_plot, std_s2, std_s1, tavg_s2, tavg_s1,
@@ -117,7 +115,7 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
     This algorithm implements the MJC algorithm devised by Joan Serra and Josep Lluis Arcos (2012). This algorithm was
     shown to outperform the Dynamic Time Warp (DTW) dissimilarity algorithm on several datasets.
 
-    mjc() takes two time series s1 and s2 and computes the minimum jump cost between them.
+    pymjc() takes two time series s1 and s2 and computes the minimum jump cost between them.
     It has been modified so that it can compute the MJC of time series that have arbitrarily spaced data points,
     different sampling rates, and non-overlapping regions.
 
@@ -280,17 +278,3 @@ def cmin(x, idx_x, y, idx_y, n, phi, t_avg_x, t_avg_y):
     idx_x += max(1, int(t_avg_y / t_avg_x))
     idx_y += dmin + max(1, int(t_avg_x / t_avg_y))
     return c_min, idx_x, idx_y, _idx_x, _idx_y
-
-
-def minimumMJC(s1, s2, dXYlimit=np.inf, beta=1, showPlot=False, std_s1=None, std_s2=None, tavg_s1=None, tavg_s2=None,
-               overrideChecks=False):
-    warnings.warn("minimumMJC is deprecated and will be removed in a future release. Use dmjc() instead.",
-                  DeprecationWarning)
-    return dmjc(s1, s2, dXYlimit, beta, showPlot, std_s1, std_s2, tavg_s1, tavg_s2, overrideChecks)
-
-
-def MJC(s1, s2, dXYlimit=inf, beta=1, showPlot=False, std_s1=None, std_s2=None, tavg_s1=None, tavg_s2=None,
-        returnargs=False, overrideChecks=False):
-    warnings.warn("MJC is deprecated and will be removed in the a future release. Use minimum_mjc() instead.",
-                  DeprecationWarning)
-    return mjc(s1, s2, dXYlimit, beta, showPlot, std_s1, std_s2, tavg_s1, tavg_s2, returnargs, overrideChecks)
