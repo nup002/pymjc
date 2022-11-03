@@ -3,12 +3,12 @@
 [![PyTest](https://github.com/nup002/pymjc/actions/workflows/PyTest.yml/badge.svg)](https://github.com/nup002/mjc/actions/workflows/PyTest.yml)
 # Minimum Jump Cost dissimilarity measure in Python
 
-This python package implements the Minimum Jump Cost (MJC) dissimilarity measure devised by Joan Serra and Josep Lluis 
+This python library implements the Minimum Jump Cost (MJC) dissimilarity measure devised by Joan Serra and Josep Lluis 
 Arcos in 2012. The MJC dissimilarity measure was shown to outperform the Dynamic Time Warp (DTW) dissimilarity measure 
 on several datasets. You can read their paper here: 
 https://www.iiia.csic.es/sites/default/files/4584.pdf.
 
-This package can compute the MJC for timeseries with different sampling rates, arbitrarily spaced data points, and 
+This library can compute the MJC for timeseries with different sampling rates, arbitrarily spaced data points, and 
 non-overlapping regions.
 
 ## How to install
