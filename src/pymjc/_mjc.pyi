@@ -59,3 +59,8 @@ def cmin(x: npt.NDArray[Union[np.integer, np.floating]],
          phi: float,
          t_avg_x: float,
          t_avg_y: float) -> Tuple[float, int, int, int, int]: ...
+
+def plot(s1: npt.NDArray[Union[np.integer, np.floating]],
+         s2: npt.NDArray[Union[np.integer, np.floating]],
+         jumps: npt.NDArray[np.integer],
+         d_xy: float) -> None: ...

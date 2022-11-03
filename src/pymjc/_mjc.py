@@ -6,8 +6,8 @@ import numpy as np
 def dmjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=None, tavg_s1=None,
          tavg_s2=None, override_checks=False):
     """
-    This is the symmetrized version of the Minimum Jump Cost dissimilarity measure. Depending whether we start at s1 or
-    s2 we will obtain different values. This computes both and returns the lowest value.
+    This is the symmetrized version of the Minimum Jump Cost dissimilarity measure. Depending on whether we start at s1
+    or s2 we will obtain different values. This computes both and returns the lowest value.
 
     See pymjc() for definition of variables and return values. """
     dxy_a, abandoned_a = mjc(s1, s2, dxy_limit, beta, show_plot, std_s1, std_s2, tavg_s1, tavg_s2, return_args=True,
