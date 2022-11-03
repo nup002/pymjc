@@ -1,6 +1,8 @@
 ![LICENCE](https://img.shields.io/github/license/nup002/pymjc)
 [![Flake8](https://github.com/nup002/pymjc/actions/workflows/flake8.yml/badge.svg)](https://github.com/nup002/mjc/actions/workflows/flake8.yml)
 [![PyTest](https://github.com/nup002/pymjc/actions/workflows/PyTest.yml/badge.svg)](https://github.com/nup002/mjc/actions/workflows/PyTest.yml)
+![Version](https://img.shields.io/pypi/v/pymjc)
+![Python](https://img.shields.io/pypi/pyversions/pymjc)
 # Minimum Jump Cost dissimilarity measure in Python
 
 This python library implements the Minimum Jump Cost (MJC) dissimilarity measure devised by Joan Serra and Josep Lluis 
@@ -12,9 +14,8 @@ This library can compute the MJC for timeseries with different sampling rates, a
 non-overlapping regions.
 
 ## How to install
-I am working on publishing it to PyPi at this moment, and it should be ready within a week (before 10 December 2022). 
-For now, you will have to download the repository directly and install manually with pip.
-
+`pymjc` is available from PyPi. Run the following in a command line terminal:<br>
+``` pip install pymjc```
 
 ## How to use
 Example: 
