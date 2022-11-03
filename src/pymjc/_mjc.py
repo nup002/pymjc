@@ -6,10 +6,12 @@ import numpy as np
 def dmjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=None, tavg_s1=None,
          tavg_s2=None, override_checks=False):
     """
-    This is the symmetrized version of the Minimum Jump Cost dissimilarity measure. Depending on whether we start at s1
-    or s2 we will obtain different values. This computes both and returns the lowest value.
+    This is the symmetrized version of the Minimum Jump Cost dissimilarity measure. Depending on whether we start
+    jumping from timeseries s1 to timeseries s2 or opposite, we will obtain different values for the dissimilarity
+    measure. This function computes the MJC dissimilarity measure for both options and returns the lowest value.
 
-    See pymjc() for definition of variables and return values. """
+    See mjc() for definition of parameters and return values.
+    """
     dxy_a, abandoned_a = mjc(s1, s2, dxy_limit, beta, show_plot, std_s1, std_s2, tavg_s1, tavg_s2, return_args=True,
                              override_checks=override_checks)
     dxy_b, abandoned_b = mjc(s2, s1, dxy_limit, beta, show_plot, std_s2, std_s1, tavg_s2, tavg_s1,
@@ -21,30 +23,34 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
         return_args=False, override_checks=False):
     """
     Minimum Jump Cost (MJC) dissimiliarity measure.
-    This algorithm implements the MJC algorithm devised by Joan Serra and Josep Lluis Arcos (2012). This algorithm was
-    shown to outperform the Dynamic Time Warp (DTW) dissimilarity algorithm on several datasets.
+    This function implements the MJC algorithm devised by Joan Serra and Josep Lluis Arcos (2012). The MJC dissimilarity
+    measure was shown to outperform the Dynamic Time Warp (DTW) dissimilarity measure on several datasets.
 
-    pymjc() takes two time series s1 and s2 and computes the minimum jump cost between them.
+    mjc() takes two time series 's1' and 's2' and computes the minimum jump cost 'd_xy' between them. This is the
+    dissimilarity measure.
     It has been modified so that it can compute the MJC of time series that have arbitrarily spaced data points,
     different sampling rates, and non-overlapping regions.
 
-    An early abandoning variable, dXYlimit, allows the user to specify a maximum dissimilarity that will cancel the
+    An early abandoning variable, 'dxy_limit', allows you to specify a maximum dissimilarity that will cancel the
     computation.
 
     The time series are specified as follows:
-    - s1 and s2 may be of different length.
-    - s1 and s2 may or may not have time information.
-    - If one of the time series has time information, the other must also have it.
+        - They may be python Lists or numpy.ndarrays
+        - They may be of different length.
+        - They may or may not have time information.
+        - If one of the time series has time information, the other must also have it.
+        - Their datatype may be floats or integers.
+
 
     A time series with no time information is just an array of values. The first element of the array corresponds to
-    the earliest point in the time series. Example: s1 = [d_0, d_1, d_2, ...], where d_i is the ith value of the time
+    the earliest point in the time series. Example: s1 = [d_0, d_1, d_2, ...], where d_i is the i-th value of the time
     series.
     A time series with time information must be a 2D array of shape (2, n). The data at index 0 are time
     data, and the data at index 1 is amplitude data.
-    Example: s1 = [[t_0, t_1, t_2, ...], [d_0, d_1, d_2, ...]], where d_i is the ith value of the time series, and t_i
-    is the time of the ith measurement. The time values may be integers or floats, and need not begin at 0.
+    Example: s1 = [[t_0, t_1, t_2, ...], [d_0, d_1, d_2, ...]], where d_i is the i-th value of the time series, and t_i
+    is the time of the i-th measurement. The time values may be integers or floats, and need not begin at 0.
 
-    To visualize the algorithm, you may pass the variable showPlot=True. This will generate a plot with the two time
+    To visualize the algorithm, you may pass the variable show_plot=True. This will generate a plot with the two time
     series, and arrows signifying the jumps that the algorithm made when calculating the Minimum Jump Cost.
 
     ---- PERFORMANCE ----
@@ -57,16 +63,16 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
     number of samples in each timeseries.
 
     As part of the calculation of the MJC, the algorithm calculates the standard deviations of the amplitude data, and
-    the average sampling period of s1 and s2. This lowers execution speed, but is required.
+    the average sampling periods of s1 and s2. This lowers execution speed, but is required.
     However, if you know the standard deviations and/or the average time difference between data points of either
-    (or both) s1 and s2 a priori, you may pass these as variables. They are named std_s1 and std_s2 and tavg_s1 and
+    (or both) s1 and s2 a-priori, you may pass these as variables. They are named std_s1, std_s2, tavg_s1, and
     tavg_s2. Any number of these may be passed. The ones which are not passed will be calculated.
 
 
     Parameters
     ----------
-    s1              : numpy ndarray. Time series 1.
-    s2              : numpy ndarray. Time series 2.
+    s1              : np.ndarray or List. Timeseries 1. If containing time information: Row 0 is time, row 1 is data.
+    s2              : np.ndarray or List. Timeseries 2. If containing time information: Row 0 is time, row 1 is data.
     dxy_limit       : Optional float. Early abandoning variable. If the dissimilarity measure exceeds this limit the
         computation is cancelled. Default infinity.
     beta            : Optional float. Time jump cost. If 0, there is no cost associated with jumping forward. Default 1.
@@ -122,6 +128,7 @@ def mjc(s1, s2, dxy_limit=np.inf, beta=1., show_plot=False, std_s1=None, std_s2=
 
 
 def analyse_timeseries(std_s1, std_s2, tavg_s1, tavg_s2, s1, s2):
+    """ Calculates the standard deviations and mean sampling periods of timeseries 's1' and 's2'. """
     if std_s1 is None:
         std_s1 = stdev(s1[1])
     else:
@@ -148,8 +155,8 @@ def get_overlapping_region(s1, s2):
 
     Parameters
     ----------
-    s1  : np.ndarray. Data series 1.
-    s2  : np.ndarray. Data series 2.
+    s1  : np.ndarray of shape (2,n). Timeseries 1. Row 0 is time, row 1 is data.
+    s2  : np.ndarray of shape (2,m). Timeseries 2. Row 0 is time, row 1 is data.
 
     Returns
     -------
@@ -221,11 +228,11 @@ def jump_cost(x, y, dxy_limit, beta, std, tavg_x, tavg_y):
     Calculates the minimum jump cost d_xy between timeseries x and y.
     Parameters
     ----------
-    x           : np.ndarray of shape (2,n). Row 0 is time, row 1 is data.
-    y           : np.ndarray of shape (2,m). Row 0 is time, row 1 is data.
+    x           : np.ndarray of shape (2,n). Timeseries 1. Row 0 is time, row 1 is data.
+    y           : np.ndarray of shape (2,m). Timeseries 2. Row 0 is time, row 1 is data.
     dxy_limit   : Early abandoning variable. Computation is cancelled if the jump cost exceeds this value.
     beta        : Time jump cost.
-    std         : Timeseries standard deviation, used in calcilation of the time advancement cost phi
+    std         : Timeseries standard deviation, used in calculation of the time advancement cost phi
     tavg_x      : Average sample period of timeseries x.
     tavg_y      : Average sample period of timeseries y.
 
@@ -302,6 +309,19 @@ def cmin(x, idx_x, y, idx_y, n, phi, t_avg_x, t_avg_y):
 
 
 def plot(s1, s2, jumps, d_xy):
+    """
+    Visualizes the MJC algorithm by creating a plot of the two timeseries s1 and s2 and the jumps that the MJC
+    algorithm performed between them. Improvements to this function are welcome!
+
+    Parameters
+    ----------
+    s1          : np.ndarray of shape (2,n). Row 0 is time, row 1 is data.
+    s2          : np.ndarray of shape (2,m). Row 0 is time, row 1 is data.
+    jumps       : np.ndarray of shape (2,k). Jump i (jumps[:, i]) is of the format [idx_s1, idx_s2] if i is even, and
+        [idx_s2, idx_s1] if i is odd.
+    d_xy        : The computed jump cost, or dissimilarity measure between the two timeseries.
+
+    """
     plt.figure(figsize=(13, 7))
     ax = plt.axes()
     plt.plot(s1[0], s1[1], 'bo', s1[0], s1[1], 'b')

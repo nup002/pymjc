@@ -3,14 +3,17 @@
 [![PyTest](https://github.com/nup002/pymjc/actions/workflows/PyTest.yml/badge.svg)](https://github.com/nup002/mjc/actions/workflows/PyTest.yml)
 # Minimum Jump Cost dissimilarity measure in Python
 
-This package implements the Minimum Jump Cost (MJC) dissimilarity measure devised by Joan Serra and Josep Lluis Arcos in 2012. MJC was shown to be computationally fast, and sometimes even more accurate than Dynamic Time Warp (DTW). You can read the paper here: 
+This python package implements the Minimum Jump Cost (MJC) dissimilarity measure devised by Joan Serra and Josep Lluis 
+Arcos in 2012. The MJC dissimilarity measure was shown to outperform the Dynamic Time Warp (DTW) dissimilarity measure 
+on several datasets. You can read their paper here: 
 https://www.iiia.csic.es/sites/default/files/4584.pdf.
 
 This package can compute the MJC for timeseries with different sampling rates, arbitrarily spaced data points, and 
 non-overlapping regions.
 
 ## How to install
-I am working on publishing it to PyPi at this moment, and it should be ready within a week (before 10 December 2022). For now, you will have to download the repository directly and install manually with pip.
+I am working on publishing it to PyPi at this moment, and it should be ready within a week (before 10 December 2022). 
+For now, you will have to download the repository directly and install manually with pip.
 
 
 ## How to use
@@ -19,8 +22,8 @@ Example:
 from pymjc import mjc
 import numpy as np
 
-series_1 = np.array([1,2,3,4])
-series_2 = np.array([2,3,4,5])
+series_1 = np.array([1,2,3,2,1])
+series_2 = np.array([0,1,2,1,0])
 
 d_xy, abandoned = mjc(series_1, series_2, show_plot=True)
 
@@ -54,14 +57,18 @@ computation, it is abandoned.
 
 ### Performance
 The time series are cast to numpy arrays. The checking and casting lowers execution speed. Therefore, an option to
-disable this checking and casting has been implemented. If you are certain that the time series s1 and s2
-are numpy.ndarray's of the format `[[time data],[amplitude data]]`, you may pass the variable `override_checks=True`.
+disable this checking and casting has been implemented. If you are certain that the time series `s1` and `s2`
+are `numpy.ndarray`s of the format `[[time data],[amplitude data]]`, you may pass the variable `override_checks=True`.
+
+The algorithm locates the overlapping region between the two timeseries. This step is skipped if the first and last
+timestamps are equal between the two timeseries. If your data has no time data, it is skipped if there is the same
+number of samples in each timeseries.
 
 As part of the calculation of the MJC, the algorithm calculates the standard deviations of the amplitude data, and
-the average sampling period of s1 and s2. This lowers execution speed, but is required.
+the average sampling periods of `s1` and `s2`. This lowers execution speed, but is required.
 However, if you know the standard deviations and/or the average time difference between data points of either
-(or both) s1 and s2 a priori, you may pass these as variables. They are named std_s1 and std_s2 and tavg_s1 and
-tavg_s2. Any number of these may be passed. The ones which are not passed will be calculated.
+(or both) `s1` and `s2` a-priori, you may pass these as variables. They are named `std_s1`, `std_s2`, `tavg_s1`, and
+`tavg_s2`. Any number of these may be passed. The ones which are not passed will be calculated.
 
 mjc() input parameters:
 ```
