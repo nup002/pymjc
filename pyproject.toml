@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pymjc"
-version = "1.0.2"
+version = "1.0.3"
 authors = [
   { name="Magne Eik Lauritzen", email="mag.lauritzen@gmail.com" },
 ]
@@ -12,7 +12,7 @@ keywords = ["dissimilarity measure", "data science"]
 description = "Minimum Jump Cost dissimilarity measure in Python"
 readme = "README.md"
 license = { file="LICENSE" }
-requires-python = ">=3.6"
+requires-python = ">=3.7"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -20,8 +20,8 @@ classifiers = [
     "Intended Audience :: Science/Research"
 ]
 dependencies = [
-    "numpy >= 1.20.0",
-    "matplotlib"
+    "numpy>=1.20.0",
+    "matplotlib>=3.4"
 ]
 
 [project.urls]
